@@ -1,0 +1,87 @@
+<nav class="breadcrumb">
+    <a href="/vuln" hx-get="/vuln" hx-target="#content" hx-push-url="true">Vulnerabilities</a>
+    <span>›</span>
+    <a href="/vuln/ns/{{ namespace }}" hx-get="/vuln/ns/{{ namespace }}" hx-target="#content" hx-push-url="true">{{ namespace }}</a>
+    <span>›</span>
+    <span>{{ workload.identity.workload_name }} / {{ workload.container_name }}</span>
+</nav>
+
+<h1>{{ workload.identity.workload_name }}</h1>
+<div class="meta">
+    <span><strong>Kind:</strong> {{ workload.identity.kind }}</span>
+    <span><strong>Container:</strong> {{ workload.container_name }}</span>
+    <span><strong>Image:</strong> {{ workload.image_tag }}</span>
+</div>
+
+<div class="summary-bar">
+    <span class="badge critical">Critical: {{ workload.severities.critical.all }}</span>
+    <span class="badge high">High: {{ workload.severities.high.all }}</span>
+    <span class="badge medium">Medium: {{ workload.severities.medium.all }}</span>
+    <span class="badge low">Low: {{ workload.severities.low.all }}</span>
+</div>
+
+<div class="filter-bar">
+    <a href="/vuln/ns/{{ namespace }}/workload/{{ workload.identity.name }}"
+       hx-get="/vuln/ns/{{ namespace }}/workload/{{ workload.identity.name }}"
+       hx-target="#content" hx-push-url="true"
+       class="filter-btn{% if filter.is_empty() %} active{% endif %}">All</a>
+    <a href="/vuln/ns/{{ namespace }}/workload/{{ workload.identity.name }}?filter=fixable"
+       hx-get="/vuln/ns/{{ namespace }}/workload/{{ workload.identity.name }}?filter=fixable"
+       hx-target="#content" hx-push-url="true"
+       class="filter-btn{% if filter == "fixable" %} active{% endif %}">Fixable only</a>
+</div>
+
+{% if matches.is_empty() %}
+<p>No vulnerabilities found{% if !filter.is_empty() %} matching filter "{{ filter }}"{% endif %}.</p>
+{% else %}
+<table class="cve-table">
+    <thead>
+        <tr>
+            <th data-sort="text">CVE</th>
+            <th data-sort="severity">Severity</th>
+            <th data-sort="num">CVSS</th>
+            <th data-sort="text">Package</th>
+            <th data-sort="text">Installed</th>
+            <th data-sort="text">Fixed In</th>
+            <th data-sort="text">Fix State</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in matches %}
+        <tr class="severity-{{ m.vulnerability.severity }}">
+            <td>
+                {% if !m.vulnerability.data_source.is_empty() %}
+                <a href="{{ m.vulnerability.data_source }}" target="_blank" rel="noopener">{{ m.vulnerability.id }}</a>
+                {% else %}
+                {{ m.vulnerability.id }}
+                {% endif %}
+            </td>
+            <td><span class="badge {{ m.vulnerability.severity|lower }}">{{ m.vulnerability.severity }}</span></td>
+            <td class="num">
+                {% if !m.vulnerability.cvss_display().is_empty() %}
+                <span class="badge {{ m.vulnerability.cvss_class() }}">{{ m.vulnerability.cvss_display() }}</span>
+                {% else %}
+                <span class="muted">—</span>
+                {% endif %}
+            </td>
+            <td><code>{{ m.artifact.name }}</code></td>
+            <td><code>{{ m.artifact.version }}</code></td>
+            <td>
+                {% if m.vulnerability.fix.versions.is_empty() %}
+                <span class="muted">—</span>
+                {% else %}
+                <code>{{ m.vulnerability.fix.versions.join(", ") }}</code>
+                {% endif %}
+            </td>
+            <td>{{ m.vulnerability.fix.state }}</td>
+            <td class="desc-cell">
+                {% if let Some(rv) = m.related_vulnerabilities.first() %}
+                {{ rv.description }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

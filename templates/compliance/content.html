@@ -1,0 +1,46 @@
+<h1>⚘ compliance controls</h1>
+
+{% if controls.is_empty() %}
+<p>No compliance data found. Is Kubescape scanning configuration in the cluster?</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Control ID</th>
+            <th data-sort="text">Name</th>
+            <th data-sort="text">Severity</th>
+            <th data-sort="text">Frameworks</th>
+            <th class="num" data-sort="num">Passed</th>
+            <th class="num" data-sort="num">Failed</th>
+            <th class="num" data-sort="num">Total</th>
+            <th class="num" data-sort="num">Compliance %</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in controls %}
+        <tr>
+            <td><code>{{ c.control_id }}</code></td>
+            <td>{{ c.name }}</td>
+            <td><span class="badge {{ c.severity|lower }}">{{ c.severity }}</span></td>
+            <td>
+                {% for fw in c.framework_tags() %}
+                <span class="label-tag fw">{{ fw }}</span>
+                {% endfor %}
+            </td>
+            <td class="num">{{ c.passed }}</td>
+            <td class="num">{% if c.failed > 0 %}<span class="badge high">{{ c.failed }}</span>{% else %}0{% endif %}</td>
+            <td class="num">{{ c.total }}</td>
+            <td class="num">
+                {% if c.compliance_pct() >= 100.0 %}
+                <span class="badge-status complete">100%</span>
+                {% else if c.compliance_pct() >= 80.0 %}
+                <span class="badge medium">{{ c.compliance_pct_display() }}%</span>
+                {% else %}
+                <span class="badge critical">{{ c.compliance_pct_display() }}%</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

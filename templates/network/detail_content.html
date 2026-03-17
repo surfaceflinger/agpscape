@@ -1,0 +1,95 @@
+<nav class="breadcrumb">
+    <a href="/network" hx-get="/network" hx-target="#content" hx-push-url="true">Network</a>
+    <span>›</span>
+    <a href="/network/ns/{{ namespace }}" hx-get="/network/ns/{{ namespace }}" hx-target="#content" hx-push-url="true">{{ namespace }}</a>
+    <span>›</span>
+    <span>{{ identity.workload_name }}</span>
+</nav>
+
+<h1>{{ identity.workload_name }}</h1>
+<div class="meta">
+    <span><strong>Kind:</strong> {{ identity.kind }}</span>
+</div>
+
+{% for container in spec.containers.iter().chain(spec.init_containers.iter()) %}
+<h2>Container: {{ container.name }}</h2>
+
+{% if !container.ingress.is_empty() %}
+<h3>Ingress ({{ container.ingress.len() }})</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Target</th>
+            <th>Ports</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for n in container.ingress %}
+        <tr>
+            <td><span class="badge-status {{ n.neighbor_type }}">{{ n.neighbor_type }}</span></td>
+            <td>
+                {% if !n.dns.is_empty() %}{{ n.dns }}{% endif %}
+                {% if !n.ip_address.is_empty() %}<code>{{ n.ip_address }}</code>{% endif %}
+                {% if let Some(ps) = n.pod_selector %}
+                {% for (k, v) in ps.match_labels %}
+                <span class="label-tag">{{ k }}={{ v }}</span>
+                {% endfor %}
+                {% endif %}
+                {% if let Some(ns_sel) = n.namespace_selector %}
+                {% for (k, v) in ns_sel.match_labels %}
+                <span class="label-tag ns">ns:{{ k }}={{ v }}</span>
+                {% endfor %}
+                {% endif %}
+            </td>
+            <td>
+                {% for p in n.ports %}
+                <code>{{ p.protocol }}/{{ p.port }}</code>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if !container.egress.is_empty() %}
+<h3>Egress ({{ container.egress.len() }})</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Target</th>
+            <th>Ports</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for n in container.egress %}
+        <tr>
+            <td><span class="badge-status {{ n.neighbor_type }}">{{ n.neighbor_type }}</span></td>
+            <td>
+                {% if !n.dns.is_empty() %}{{ n.dns }}{% endif %}
+                {% if !n.ip_address.is_empty() %}<code>{{ n.ip_address }}</code>{% endif %}
+                {% if let Some(ps) = n.pod_selector %}
+                {% for (k, v) in ps.match_labels %}
+                <span class="label-tag">{{ k }}={{ v }}</span>
+                {% endfor %}
+                {% endif %}
+                {% if let Some(ns_sel) = n.namespace_selector %}
+                {% for (k, v) in ns_sel.match_labels %}
+                <span class="label-tag ns">ns:{{ k }}={{ v }}</span>
+                {% endfor %}
+                {% endif %}
+            </td>
+            <td>
+                {% for p in n.ports %}
+                <code>{{ p.protocol }}/{{ p.port }}</code>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% endfor %}

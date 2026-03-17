@@ -1,0 +1,86 @@
+<nav class="breadcrumb">
+    <a href="/runtime" hx-get="/runtime" hx-target="#content" hx-push-url="true">Runtime</a>
+    <span>›</span>
+    <a href="/runtime/ns/{{ namespace }}" hx-get="/runtime/ns/{{ namespace }}" hx-target="#content" hx-push-url="true">{{ namespace }}</a>
+    <span>›</span>
+    <span>{{ identity.workload_name }}</span>
+</nav>
+
+<h1>{{ identity.workload_name }}</h1>
+<div class="meta">
+    <span><strong>Kind:</strong> {{ identity.kind }}</span>
+</div>
+
+{% for container in spec.containers.iter().chain(spec.init_containers.iter()) %}
+<h2>Container: {{ container.name }}</h2>
+{% if !container.image_tag.is_empty() %}
+<div class="meta"><span><strong>Image:</strong> {{ container.image_tag }}</span></div>
+{% endif %}
+
+{% if !container.capabilities.is_empty() %}
+<h3>Capabilities ({{ container.capabilities.len() }})</h3>
+<div class="tag-list">
+    {% for cap in container.capabilities %}
+    <span class="label-tag cap">{{ cap }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if !container.syscalls.is_empty() %}
+<details>
+    <summary><h3 style="display:inline">Syscalls ({{ container.syscalls.len() }})</h3></summary>
+    <div class="tag-list">
+        {% for sc in container.syscalls %}
+        <code class="syscall-tag">{{ sc }}</code>
+        {% endfor %}
+    </div>
+</details>
+{% endif %}
+
+{% if !container.endpoints.is_empty() %}
+<h3>Endpoints ({{ container.endpoints.len() }})</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Endpoint</th>
+            <th>Methods</th>
+            <th>Direction</th>
+            <th>Internal</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ep in container.endpoints %}
+        <tr>
+            <td><code>{{ ep.endpoint }}</code></td>
+            <td>{% for m in ep.methods %}<code>{{ m }}</code> {% endfor %}</td>
+            <td>{{ ep.direction }}</td>
+            <td>{% if ep.internal %}yes{% else %}no{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if !container.opens.is_empty() %}
+<details>
+    <summary><h3 style="display:inline">File Access ({{ container.opens.len() }})</h3></summary>
+    <table>
+        <thead>
+            <tr>
+                <th>Path</th>
+                <th>Flags</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in container.opens %}
+            <tr>
+                <td><code>{{ f.path }}</code></td>
+                <td>{% for fl in f.flags %}<code>{{ fl }}</code> {% endfor %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</details>
+{% endif %}
+
+{% endfor %}

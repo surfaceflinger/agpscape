@@ -1,0 +1,35 @@
+<h1>☆ runtime alerts</h1>
+
+<div class="sub-nav">
+    <a href="/runtime" hx-get="/runtime" hx-target="#content" hx-push-url="true" class="sub-tab">profiles</a>
+    <a href="/runtime/alerts" class="sub-tab active">alerts</a>
+</div>
+
+{% if alerts.is_empty() %}
+<p>No runtime alerts found. Node-agent may have no detection rules enabled, or no alerts have been triggered.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Rule</th>
+            <th data-sort="text">Message</th>
+            <th data-sort="text">Pod</th>
+            <th data-sort="text">Namespace</th>
+            <th data-sort="text">Node</th>
+            <th data-sort="num">Timestamp</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in alerts %}
+        <tr>
+            <td><code>{{ a.rule_name }}</code></td>
+            <td>{{ a.message }}</td>
+            <td><code>{{ a.pod_name }}</code></td>
+            <td>{{ a.namespace }}</td>
+            <td>{{ a.node }}</td>
+            <td class="num">{{ a.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

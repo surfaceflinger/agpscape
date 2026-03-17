@@ -1,0 +1,68 @@
+<nav class="breadcrumb">
+    <a href="/sbom" hx-get="/sbom" hx-target="#content" hx-push-url="true">SBOM</a>
+    <span>›</span>
+    <span>{{ summary.image_tag }}</span>
+</nav>
+
+<h1>{{ summary.image_tag }}</h1>
+<div class="meta">
+    {% if !spec.syft.distro.name.is_empty() %}
+    <span><strong>Distro:</strong> {{ spec.syft.distro.name }} {{ spec.syft.distro.version }}</span>
+    {% endif %}
+    <span><strong>Packages:</strong> {{ spec.syft.artifacts.len() }}</span>
+    {% if let Some(f) = filtered %}
+    <span><strong>Filtered (relevant):</strong> {{ f.syft.artifacts.len() }}</span>
+    {% endif %}
+</div>
+
+{% if let Some(f) = filtered %}
+{% if !f.syft.artifacts.is_empty() %}
+<h2>Relevant packages (filtered SBOM)</h2>
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Package</th>
+            <th data-sort="text">Version</th>
+            <th data-sort="text">Type</th>
+            <th>License</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in f.syft.artifacts %}
+        <tr>
+            <td><code>{{ a.name }}</code></td>
+            <td><code>{{ a.version }}</code></td>
+            <td>{{ a.artifact_type }}</td>
+            <td class="muted">{% for l in a.licenses %}{{ l.value }}{% if !loop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endif %}
+
+<h2>All packages</h2>
+{% if spec.syft.artifacts.is_empty() %}
+<p>No packages found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Package</th>
+            <th data-sort="text">Version</th>
+            <th data-sort="text">Type</th>
+            <th>License</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in spec.syft.artifacts %}
+        <tr>
+            <td><code>{{ a.name }}</code></td>
+            <td><code>{{ a.version }}</code></td>
+            <td>{{ a.artifact_type }}</td>
+            <td class="muted">{% for l in a.licenses %}{{ l.value }}{% if !loop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

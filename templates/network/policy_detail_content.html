@@ -1,0 +1,16 @@
+<nav class="breadcrumb">
+    <a href="/network" hx-get="/network" hx-target="#content" hx-push-url="true">Network</a>
+    <span>›</span>
+    <a href="/network/policies" hx-get="/network/policies" hx-target="#content" hx-push-url="true">Policies</a>
+    <span>›</span>
+    <span>{{ detail.workload }}</span>
+</nav>
+
+<h1>{{ detail.workload }}</h1>
+<div class="meta">
+    <span><strong>Kind:</strong> {{ detail.kind }}</span>
+    <span><strong>Namespace:</strong> {{ detail.namespace }}</span>
+</div>
+
+<h2>Generated NetworkPolicy YAML</h2>
+<pre><code>{{ detail.policy_yaml }}</code></pre>

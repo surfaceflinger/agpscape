@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}agpscape{% endblock %}
+{% block content %}
+<h1>˚ʚ agpscape ɞ˚</h1>
+<div class="section-cards">
+    <a href="/vuln" class="card" hx-get="/vuln" hx-target="#content" hx-push-url="true">
+        <h2>✧ vulnerabilities</h2>
+        <p>CVEs detected in container images across all namespaces</p>
+    </a>
+    <a href="/compliance" class="card" hx-get="/compliance" hx-target="#content" hx-push-url="true">
+        <h2>⚘ compliance</h2>
+        <p>NSA, MITRE, CIS framework compliance across all controls</p>
+    </a>
+    <a href="/config" class="card" hx-get="/config" hx-target="#content" hx-push-url="true">
+        <h2>⚙ configuration</h2>
+        <p>Kubernetes security misconfigurations and CIS benchmark results</p>
+    </a>
+    <a href="/network" class="card" hx-get="/network" hx-target="#content" hx-push-url="true">
+        <h2>✿ network</h2>
+        <p>Network neighborhoods, generated policies, known servers</p>
+    </a>
+    <a href="/runtime" class="card" hx-get="/runtime" hx-target="#content" hx-push-url="true">
+        <h2>☆ runtime</h2>
+        <p>Application profiles, runtime detection alerts</p>
+    </a>
+    <a href="/sbom" class="card" hx-get="/sbom" hx-target="#content" hx-push-url="true">
+        <h2>♡ sbom</h2>
+        <p>Software Bill of Materials with relevance filtering</p>
+    </a>
+</div>
+{% endblock %}

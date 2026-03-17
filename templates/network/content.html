@@ -1,0 +1,28 @@
+<h1>✿ network neighborhoods</h1>
+
+<div class="sub-nav">
+    <a href="/network" class="sub-tab active">neighborhoods</a>
+    <a href="/network/policies" hx-get="/network/policies" hx-target="#content" hx-push-url="true" class="sub-tab">generated policies</a>
+    <a href="/network/servers" hx-get="/network/servers" hx-target="#content" hx-push-url="true" class="sub-tab">known servers</a>
+</div>
+
+{% if namespaces.is_empty() %}
+<p>No network neighborhood data found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Namespace</th>
+            <th class="num" data-sort="num">Workloads</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ns in namespaces %}
+        <tr hx-get="/network/ns/{{ ns.0 }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td>{{ ns.0 }}</td>
+            <td class="num">{{ ns.1 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

@@ -1,0 +1,34 @@
+<h1>✿ generated network policies</h1>
+
+<div class="sub-nav">
+    <a href="/network" hx-get="/network" hx-target="#content" hx-push-url="true" class="sub-tab">neighborhoods</a>
+    <a href="/network/policies" class="sub-tab active">generated policies</a>
+    <a href="/network/servers" hx-get="/network/servers" hx-target="#content" hx-push-url="true" class="sub-tab">known servers</a>
+</div>
+
+{% if policies.is_empty() %}
+<p>No generated network policies found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Namespace</th>
+            <th data-sort="text">Workload</th>
+            <th data-sort="text">Kind</th>
+            <th class="num" data-sort="num">Ingress Rules</th>
+            <th class="num" data-sort="num">Egress Rules</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in policies %}
+        <tr hx-get="/network/policies/ns/{{ p.namespace }}/{{ p.name }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td>{{ p.namespace }}</td>
+            <td><code>{{ p.workload }}</code></td>
+            <td>{{ p.kind }}</td>
+            <td class="num">{{ p.ingress_count }}</td>
+            <td class="num">{{ p.egress_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

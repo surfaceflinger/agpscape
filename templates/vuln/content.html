@@ -1,0 +1,35 @@
+<h1>✧ vulnerabilities</h1>
+
+<div class="sub-nav">
+    <a href="/vuln" class="sub-tab active">by namespace</a>
+    <a href="/vuln/images" hx-get="/vuln/images" hx-target="#content" hx-push-url="true" class="sub-tab">by image</a>
+</div>
+
+{% if namespaces.is_empty() %}
+<p>No vulnerability data found. Is Kubescape installed and scanning in the cluster?</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Namespace</th>
+            <th class="num" data-sort="num">Critical</th>
+            <th class="num" data-sort="num">High</th>
+            <th class="num" data-sort="num">Medium</th>
+            <th class="num" data-sort="num">Low</th>
+            <th class="num" data-sort="num">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ns in namespaces %}
+        <tr hx-get="/vuln/ns/{{ ns.name }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td>{{ ns.name }}</td>
+            <td class="num"><span class="badge critical">{{ ns.severities.critical.all }}</span></td>
+            <td class="num"><span class="badge high">{{ ns.severities.high.all }}</span></td>
+            <td class="num"><span class="badge medium">{{ ns.severities.medium.all }}</span></td>
+            <td class="num"><span class="badge low">{{ ns.severities.low.all }}</span></td>
+            <td class="num">{{ ns.severities.total() }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

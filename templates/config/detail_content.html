@@ -1,0 +1,112 @@
+<nav class="breadcrumb">
+    <a href="/config" hx-get="/config" hx-target="#content" hx-push-url="true">Configuration</a>
+    <span>›</span>
+    <a href="/config/ns/{{ namespace }}" hx-get="/config/ns/{{ namespace }}" hx-target="#content" hx-push-url="true">{{ namespace }}</a>
+    <span>›</span>
+    <span>{{ identity.workload_name }}</span>
+</nav>
+
+<h1>{{ identity.workload_name }}</h1>
+<div class="meta">
+    <span><strong>Kind:</strong> {{ identity.kind }}</span>
+</div>
+
+<div class="summary-bar">
+    <span class="badge critical">Critical: {{ spec.severities.critical }}</span>
+    <span class="badge high">High: {{ spec.severities.high }}</span>
+    <span class="badge medium">Medium: {{ spec.severities.medium }}</span>
+    <span class="badge low">Low: {{ spec.severities.low }}</span>
+</div>
+
+{% let failed = spec.failed_controls() %}
+{% let passed = spec.passed_controls() %}
+{% let skipped = spec.skipped_controls() %}
+
+{% if !failed.is_empty() %}
+<h2>Failed Controls ({{ failed.len() }})</h2>
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Control ID</th>
+            <th data-sort="text">Name</th>
+            <th data-sort="severity">Severity</th>
+            <th>Rules</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in failed %}
+        <tr class="severity-{{ c.severity.severity }}">
+            <td><code>{{ c.control_id }}</code></td>
+            <td>{{ c.name }}</td>
+            <td><span class="badge {{ c.severity.severity|lower }}">{{ c.severity.severity }}</span></td>
+            <td>
+                {% for r in c.failed_rules() %}
+                <div class="rule-item">
+                    <code>{{ r.name }}</code>
+                    {% for p in r.paths %}
+                    <div class="fix-path">
+                        {% if !p.fix_path.is_empty() %}
+                        <span class="muted">fix:</span> <code>{{ p.fix_path }}</code>
+                        {% if !p.fix_path_value.is_empty() %}= <code>{{ p.fix_path_value }}</code>{% endif %}
+                        {% endif %}
+                        {% if !p.failed_path.is_empty() %}
+                        <span class="muted">failed:</span> <code>{{ p.failed_path }}</code>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if !passed.is_empty() %}
+<details>
+    <summary><h2 style="display:inline">Passed Controls ({{ passed.len() }})</h2></summary>
+    <table>
+        <thead>
+            <tr>
+                <th data-sort="text">Control ID</th>
+                <th data-sort="text">Name</th>
+                <th data-sort="severity">Severity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in passed %}
+            <tr>
+                <td><code>{{ c.control_id }}</code></td>
+                <td>{{ c.name }}</td>
+                <td><span class="badge {{ c.severity.severity|lower }}">{{ c.severity.severity }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</details>
+{% endif %}
+
+{% if !skipped.is_empty() %}
+<details>
+    <summary><h2 style="display:inline">Skipped Controls ({{ skipped.len() }})</h2></summary>
+    <table>
+        <thead>
+            <tr>
+                <th data-sort="text">Control ID</th>
+                <th data-sort="text">Name</th>
+                <th data-sort="text">Info</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in skipped %}
+            <tr>
+                <td><code>{{ c.control_id }}</code></td>
+                <td>{{ c.name }}</td>
+                <td class="muted">{{ c.status.info }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</details>
+{% endif %}

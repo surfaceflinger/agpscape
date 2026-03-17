@@ -1,0 +1,20 @@
+<h1>♡ software bill of materials</h1>
+
+{% if images.is_empty() %}
+<p>No SBOM data found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Image</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for img in images %}
+        <tr hx-get="/sbom/image/{{ img.name }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td class="image-cell" title="{{ img.image_id }}">{{ img.image_tag }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

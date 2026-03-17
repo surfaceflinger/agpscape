@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Error {{ status }} — agpscape{% endblock %}
+{% block content %}
+<div class="error">
+    <h2>Error {{ status }}</h2>
+    <p>{{ message }}</p>
+    <a href="/">Back to dashboard</a>
+</div>
+{% endblock %}

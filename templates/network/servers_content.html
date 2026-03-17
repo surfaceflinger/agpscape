@@ -1,0 +1,30 @@
+<h1>✿ known servers</h1>
+
+<div class="sub-nav">
+    <a href="/network" hx-get="/network" hx-target="#content" hx-push-url="true" class="sub-tab">neighborhoods</a>
+    <a href="/network/policies" hx-get="/network/policies" hx-target="#content" hx-push-url="true" class="sub-tab">generated policies</a>
+    <a href="/network/servers" class="sub-tab active">known servers</a>
+</div>
+
+{% if servers.is_empty() %}
+<p>No known servers found. KnownServer CRDs may not be populated yet.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Name</th>
+            <th data-sort="text">Server</th>
+            <th data-sort="text">IP Block</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in servers %}
+        <tr>
+            <td><code>{{ s.name }}</code></td>
+            <td>{{ s.server }}</td>
+            <td><code>{{ s.ip_block }}</code></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

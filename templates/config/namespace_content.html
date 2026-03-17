@@ -1,0 +1,40 @@
+<nav class="breadcrumb">
+    <a href="/config" hx-get="/config" hx-target="#content" hx-push-url="true">Configuration</a>
+    <span>›</span>
+    <span>{{ namespace }}</span>
+</nav>
+
+<h1>{{ namespace }}</h1>
+
+{% if workloads.is_empty() %}
+<p>No configuration scan data in this namespace.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Kind</th>
+            <th data-sort="text">Resource</th>
+            <th class="num" data-sort="num">Critical</th>
+            <th class="num" data-sort="num">High</th>
+            <th class="num" data-sort="num">Medium</th>
+            <th class="num" data-sort="num">Low</th>
+            <th class="num" data-sort="num">Failed</th>
+            <th class="num" data-sort="num">Passed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for w in workloads %}
+        <tr hx-get="/config/ns/{{ namespace }}/resource/{{ w.identity.name }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td><code>{{ w.identity.kind }}</code></td>
+            <td>{{ w.identity.workload_name }}</td>
+            <td class="num"><span class="badge critical">{{ w.severities.critical }}</span></td>
+            <td class="num"><span class="badge high">{{ w.severities.high }}</span></td>
+            <td class="num"><span class="badge medium">{{ w.severities.medium }}</span></td>
+            <td class="num"><span class="badge low">{{ w.severities.low }}</span></td>
+            <td class="num"><span class="badge-status failed">{{ w.failed_count() }}</span></td>
+            <td class="num"><span class="badge-status passed">{{ w.passed_count() }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

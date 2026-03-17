@@ -1,0 +1,27 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "agpscape.fullname" . }}
+  labels:
+    {{- include "agpscape.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["spdx.softwarecomposition.kubescape.io"]
+    resources:
+      - vulnerabilitysummaries
+      - vulnerabilitymanifestsummaries
+      - vulnerabilitymanifests
+      - configurationscansummaries
+      - workloadconfigurationscans
+      - workloadconfigurationscansummaries
+      - networkneighborhoods
+      - applicationprofiles
+      - sbomsyfts
+      - sbomsyftfiltereds
+      - generatednetworkpolicies
+      - knownservers
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+    verbs: ["get", "list"]

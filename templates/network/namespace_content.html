@@ -1,0 +1,30 @@
+<nav class="breadcrumb">
+    <a href="/network" hx-get="/network" hx-target="#content" hx-push-url="true">Network</a>
+    <span>›</span>
+    <span>{{ namespace }}</span>
+</nav>
+
+<h1>{{ namespace }}</h1>
+
+{% if workloads.is_empty() %}
+<p>No network neighborhood data in this namespace.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Kind</th>
+            <th data-sort="text">Workload</th>
+            <th data-sort="text">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for w in workloads %}
+        <tr hx-get="/network/ns/{{ namespace }}/workload/{{ w.identity.name }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td><code>{{ w.identity.kind }}</code></td>
+            <td>{{ w.identity.workload_name }}</td>
+            <td><span class="badge-status {{ w.completion }}">{{ w.completion }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

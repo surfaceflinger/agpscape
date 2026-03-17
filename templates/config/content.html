@@ -1,0 +1,30 @@
+<h1>⚙ configuration scans</h1>
+
+{% if namespaces.is_empty() %}
+<p>No configuration scan data found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Namespace</th>
+            <th class="num" data-sort="num">Critical</th>
+            <th class="num" data-sort="num">High</th>
+            <th class="num" data-sort="num">Medium</th>
+            <th class="num" data-sort="num">Low</th>
+            <th class="num" data-sort="num">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ns in namespaces %}
+        <tr hx-get="/config/ns/{{ ns.name }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td>{{ ns.name }}</td>
+            <td class="num"><span class="badge critical">{{ ns.severities.critical }}</span></td>
+            <td class="num"><span class="badge high">{{ ns.severities.high }}</span></td>
+            <td class="num"><span class="badge medium">{{ ns.severities.medium }}</span></td>
+            <td class="num"><span class="badge low">{{ ns.severities.low }}</span></td>
+            <td class="num">{{ ns.severities.total() }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

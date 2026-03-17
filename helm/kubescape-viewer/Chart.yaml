@@ -1,0 +1,6 @@
+apiVersion: v2
+name: agpscape
+description: Read-only web UI for Kubescape security data
+version: 0.1.0
+appVersion: "0.1.0"
+type: application

@@ -1,0 +1,37 @@
+<h1>✧ vulnerabilities by image</h1>
+
+<div class="sub-nav">
+    <a href="/vuln" hx-get="/vuln" hx-target="#content" hx-push-url="true" class="sub-tab">by namespace</a>
+    <a href="/vuln/images" class="sub-tab active">by image</a>
+</div>
+
+{% if images.is_empty() %}
+<p>No image vulnerability data found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Image</th>
+            <th class="num" data-sort="num">Workloads</th>
+            <th class="num" data-sort="num">Critical</th>
+            <th class="num" data-sort="num">High</th>
+            <th class="num" data-sort="num">Medium</th>
+            <th class="num" data-sort="num">Low</th>
+            <th class="num" data-sort="num">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for img in images %}
+        <tr>
+            <td><code>{{ img.image_tag }}</code></td>
+            <td class="num">{{ img.workload_count }}</td>
+            <td class="num"><span class="badge critical">{{ img.severities.critical.all }}</span></td>
+            <td class="num"><span class="badge high">{{ img.severities.high.all }}</span></td>
+            <td class="num"><span class="badge medium">{{ img.severities.medium.all }}</span></td>
+            <td class="num"><span class="badge low">{{ img.severities.low.all }}</span></td>
+            <td class="num">{{ img.severities.total() }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

@@ -1,0 +1,42 @@
+<nav class="breadcrumb">
+    <a href="/vuln" hx-get="/vuln" hx-target="#content" hx-push-url="true">Vulnerabilities</a>
+    <span>›</span>
+    <span>{{ namespace }}</span>
+</nav>
+
+<h1>{{ namespace }}</h1>
+
+{% if workloads.is_empty() %}
+<p>No workload vulnerability data found in this namespace.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Kind</th>
+            <th data-sort="text">Workload</th>
+            <th data-sort="text">Container</th>
+            <th data-sort="text">Image</th>
+            <th class="num" data-sort="num">Critical</th>
+            <th class="num" data-sort="num">High</th>
+            <th class="num" data-sort="num">Medium</th>
+            <th class="num" data-sort="num">Low</th>
+            <th class="num" data-sort="num">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for w in workloads %}
+        <tr hx-get="/vuln/ns/{{ namespace }}/workload/{{ w.identity.name }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td><code>{{ w.identity.kind }}</code></td>
+            <td>{{ w.identity.workload_name }}</td>
+            <td><code>{{ w.container_name }}</code></td>
+            <td class="image-cell" title="{{ w.image_tag }}">{{ w.image_tag }}</td>
+            <td class="num"><span class="badge critical">{{ w.severities.critical.all }}</span></td>
+            <td class="num"><span class="badge high">{{ w.severities.high.all }}</span></td>
+            <td class="num"><span class="badge medium">{{ w.severities.medium.all }}</span></td>
+            <td class="num"><span class="badge low">{{ w.severities.low.all }}</span></td>
+            <td class="num">{{ w.severities.total() }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

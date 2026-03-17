@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}agpscape{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="brand">꒰ agpscape ꒱</a>
+        <div class="nav-tabs">
+            <a href="/vuln" class="tab" data-section="vuln"
+               hx-get="/vuln" hx-target="#content" hx-push-url="true">✧ vulns</a>
+            <a href="/compliance" class="tab" data-section="compliance"
+               hx-get="/compliance" hx-target="#content" hx-push-url="true">⚘ compliance</a>
+            <a href="/config" class="tab" data-section="config"
+               hx-get="/config" hx-target="#content" hx-push-url="true">⚙ config</a>
+            <a href="/network" class="tab" data-section="network"
+               hx-get="/network" hx-target="#content" hx-push-url="true">✿ network</a>
+            <a href="/runtime" class="tab" data-section="runtime"
+               hx-get="/runtime" hx-target="#content" hx-push-url="true">☆ runtime</a>
+            <a href="/sbom" class="tab" data-section="sbom"
+               hx-get="/sbom" hx-target="#content" hx-push-url="true">♡ sbom</a>
+        </div>
+    </nav>
+    <div id="loading-bar" class="loading-bar"></div>
+    <main id="content" hx-indicator="#loading-bar">
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+    function updateTabs() {
+        var section = location.pathname.split('/')[1] || '';
+        document.querySelectorAll('.nav-tabs .tab').forEach(function(t) {
+            t.classList.toggle('active', t.dataset.section === section);
+        });
+    }
+    updateTabs();
+    document.addEventListener('htmx:pushedIntoHistory', updateTabs);
+
+    /* ꒰ loading bar ꒱ */
+    var bar = document.getElementById('loading-bar');
+    document.addEventListener('htmx:beforeRequest', function() {
+        bar.classList.add('active');
+    });
+    document.addEventListener('htmx:afterSettle', function() {
+        bar.classList.remove('active');
+    });
+
+    /* ꒰ sortable tables ꒱ */
+    document.body.addEventListener('click', function(e) {
+        var th = e.target.closest('th[data-sort]');
+        if (!th) return;
+        var table = th.closest('table');
+        var tbody = table.querySelector('tbody');
+        var idx = Array.from(th.parentNode.children).indexOf(th);
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        var asc = th.dataset.dir !== 'asc';
+        /* clear sort state from sibling headers */
+        th.parentNode.querySelectorAll('th[data-sort]').forEach(function(h) {
+            h.dataset.dir = '';
+            h.classList.remove('sort-asc', 'sort-desc');
+        });
+        th.dataset.dir = asc ? 'asc' : 'desc';
+        th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+        var type = th.dataset.sort;
+        var sevOrder = {critical:0,high:1,medium:2,low:3,negligible:4,unknown:5};
+        rows.sort(function(a, b) {
+            var ca = a.children[idx], cb = b.children[idx];
+            var va, vb;
+            if (type === 'num') {
+                va = parseFloat(ca.textContent) || 0;
+                vb = parseFloat(cb.textContent) || 0;
+            } else if (type === 'severity') {
+                va = sevOrder[ca.textContent.trim().toLowerCase()] ?? 99;
+                vb = sevOrder[cb.textContent.trim().toLowerCase()] ?? 99;
+            } else {
+                va = ca.textContent.trim().toLowerCase();
+                vb = cb.textContent.trim().toLowerCase();
+            }
+            if (va < vb) return asc ? -1 : 1;
+            if (va > vb) return asc ? 1 : -1;
+            return 0;
+        });
+        rows.forEach(function(r) { tbody.appendChild(r); });
+    });
+    </script>
+</body>
+</html>

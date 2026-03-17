@@ -1,0 +1,27 @@
+<h1>☆ runtime</h1>
+
+<div class="sub-nav">
+    <a href="/runtime" class="sub-tab active">profiles</a>
+    <a href="/runtime/alerts" hx-get="/runtime/alerts" hx-target="#content" hx-push-url="true" class="sub-tab">alerts</a>
+</div>
+
+{% if namespaces.is_empty() %}
+<p>No application profile data found.</p>
+{% else %}
+<table>
+    <thead>
+        <tr>
+            <th data-sort="text">Namespace</th>
+            <th class="num" data-sort="num">Profiles</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ns in namespaces %}
+        <tr hx-get="/runtime/ns/{{ ns.0 }}" hx-target="#content" hx-push-url="true" class="clickable">
+            <td>{{ ns.0 }}</td>
+            <td class="num">{{ ns.1 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
