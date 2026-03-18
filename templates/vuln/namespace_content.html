@@ -21,6 +21,7 @@
             <th class="num" data-sort="num">Medium</th>
             <th class="num" data-sort="num">Low</th>
             <th class="num" data-sort="num">Total</th>
+            <th class="num" data-sort="num">Relevant</th>
         </tr>
     </thead>
     <tbody>
@@ -35,6 +36,7 @@
             <td class="num"><span class="badge medium">{{ w.severities.medium.all }}</span></td>
             <td class="num"><span class="badge low">{{ w.severities.low.all }}</span></td>
             <td class="num">{{ w.severities.total() }}</td>
+            <td class="num">{% if w.severities.total_relevant() > 0 %}{{ w.severities.total_relevant() }}{% else %}<span class="muted">—</span>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -11,11 +11,12 @@
     <span><strong>Kind:</strong> {{ identity.kind }}</span>
 </div>
 
+{% let sev = spec.computed_severities() %}
 <div class="summary-bar">
-    <span class="badge critical">Critical: {{ spec.severities.critical }}</span>
-    <span class="badge high">High: {{ spec.severities.high }}</span>
-    <span class="badge medium">Medium: {{ spec.severities.medium }}</span>
-    <span class="badge low">Low: {{ spec.severities.low }}</span>
+    <span class="badge critical">Critical: {{ sev.critical }}</span>
+    <span class="badge high">High: {{ sev.high }}</span>
+    <span class="badge medium">Medium: {{ sev.medium }}</span>
+    <span class="badge low">Low: {{ sev.low }}</span>
 </div>
 
 {% let failed = spec.failed_controls() %}

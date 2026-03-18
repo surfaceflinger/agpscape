@@ -65,14 +65,7 @@ pub async fn vuln_workload(
         .find(|w| w.identity.name == summary_name)
         .ok_or_else(|| AppError::NotFound(format!("Workload summary '{summary_name}' not found")))?;
 
-    let manifest_name = queries::find_vuln_manifest_name(
-        &state.client, &ns,
-        &workload.identity.kind, &workload.identity.workload_name, &workload.container_name,
-    ).await?.ok_or_else(|| {
-        AppError::NotFound(format!("No vulnerability manifest found for {}/{}", workload.identity.workload_name, workload.container_name))
-    })?;
-
-    let manifest = queries::vuln_manifest(&state.client, &manifest_name).await?;
+    let manifest = queries::vuln_manifest(&state.client, &workload.manifest_name).await?;
     let mut matches = manifest.payload.matches;
 
     if filter == "fixable" {

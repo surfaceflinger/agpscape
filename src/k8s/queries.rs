@@ -17,14 +17,6 @@ fn full_spec_params() -> ListParams {
     }
 }
 
-fn full_spec_params_with_labels(labels: &str) -> ListParams {
-    ListParams {
-        resource_version: Some("fullSpec".into()),
-        label_selector: Some(labels.into()),
-        ..Default::default()
-    }
-}
-
 fn is_retryable(e: &kube::Error) -> bool {
     matches!(e, kube::Error::Api(resp) if resp.code == 429 || resp.code >= 500)
 }
@@ -103,25 +95,17 @@ fn parse_spec<T: serde::de::DeserializeOwned>(obj: &DynamicObject) -> Option<T> 
 // ── Vulnerabilities ──
 
 pub async fn vuln_namespace_summaries(client: &Client) -> Result<Vec<NamespaceSummary>, AppError> {
-    let api = Api::all_with(client.clone(), &resources::vulnerability_manifest_summary());
+    // Use the cluster-scoped VulnerabilitySummary (one per namespace) instead
+    // of listing all per-workload summaries and grouping manually.
+    let api = Api::all_with(client.clone(), &resources::vulnerability_summary());
     let items = list_full(&api).await?;
-    let grouped = group_by_ns(&items);
 
-    let mut out: Vec<NamespaceSummary> = grouped
+    let mut out: Vec<NamespaceSummary> = items
         .into_iter()
-        .map(|(ns, objs)| {
-            let mut sev = SeverityCounts::default();
-            for obj in objs {
-                if let Some(spec) = parse_spec::<VulnSummarySpec>(obj) {
-                    sev.critical.all += spec.severities.critical.all;
-                    sev.high.all += spec.severities.high.all;
-                    sev.medium.all += spec.severities.medium.all;
-                    sev.low.all += spec.severities.low.all;
-                    sev.negligible.all += spec.severities.negligible.all;
-                    sev.unknown.all += spec.severities.unknown.all;
-                }
-            }
-            NamespaceSummary { name: ns, severities: sev }
+        .filter_map(|obj| {
+            let name = obj.metadata.name.clone()?;
+            let spec = parse_spec::<VulnNamespaceSummarySpec>(&obj)?;
+            Some(NamespaceSummary { name, severities: spec.severities })
         })
         .collect();
     out.sort_by(|a, b| {
@@ -143,10 +127,11 @@ pub async fn vuln_workload_summaries(
         .into_iter()
         .filter_map(|obj| {
             let identity = extract_identity(&obj)?;
-            let spec = parse_spec::<VulnSummarySpec>(&obj)?;
+            let spec = parse_spec::<VulnManifestSummarySpec>(&obj)?;
             Some(VulnWorkloadSummary {
                 container_name: label(&obj, "kubescape.io/workload-container-name"),
                 image_tag: annotation(&obj, "kubescape.io/image-tag"),
+                manifest_name: spec.vulnerabilities_ref.all.name,
                 severities: spec.severities,
                 identity,
             })
@@ -160,29 +145,20 @@ pub async fn vuln_workload_summaries(
     Ok(summaries)
 }
 
+/// Fetch vulnerability matches by manifest name.
+///
+/// The manifest name comes from `VulnerabilityManifestSummary.spec.vulnerabilitiesRef.all.name`
+/// which points to the image-scoped VulnerabilityManifest containing all CVE matches.
+/// We use a fullSpec list (the aggregated API ignores field selectors) and find by name.
 pub async fn vuln_manifest(client: &Client, name: &str) -> Result<ManifestSpec, AppError> {
     let api = Api::namespaced_with(client.clone(), "kubescape", &resources::vulnerability_manifest());
-    let obj = get_retry(&api, name).await?;
+    let full_items = list_full(&api).await?;
+    let obj = full_items.into_iter()
+        .find(|o| o.metadata.name.as_deref() == Some(name))
+        .ok_or_else(|| AppError::NotFound(format!(
+            "Vulnerability manifest '{name}' not found"
+        )))?;
     Ok(serde_json::from_value(obj.data.get("spec").cloned().unwrap_or_default())?)
-}
-
-pub async fn find_vuln_manifest_name(
-    client: &Client,
-    namespace: &str,
-    kind: &str,
-    workload_name: &str,
-    container_name: &str,
-) -> Result<Option<String>, AppError> {
-    let api = Api::namespaced_with(client.clone(), "kubescape", &resources::vulnerability_manifest());
-    let lp = full_spec_params_with_labels(&format!(
-        "kubescape.io/workload-namespace={namespace},\
-         kubescape.io/workload-kind={kind},\
-         kubescape.io/workload-name={workload_name},\
-         kubescape.io/workload-container-name={container_name},\
-         kubescape.io/context=non-filtered"
-    ));
-    let list = list_retry(&api, &lp).await?;
-    Ok(list.items.into_iter().next().and_then(|o| o.metadata.name))
 }
 
 /// Aggregate vulnerabilities by image across all workloads.
@@ -194,7 +170,7 @@ pub async fn vuln_image_summaries(client: &Client) -> Result<Vec<ImageVulnSummar
     for obj in &items {
         let image_tag = annotation(obj, "kubescape.io/image-tag");
         if image_tag.is_empty() { continue; }
-        let spec = match parse_spec::<VulnSummarySpec>(obj) {
+        let spec = match parse_spec::<VulnManifestSummarySpec>(obj) {
             Some(s) => s,
             None => continue,
         };
@@ -210,6 +186,12 @@ pub async fn vuln_image_summaries(client: &Client) -> Result<Vec<ImageVulnSummar
         entry.severities.low.all = entry.severities.low.all.max(spec.severities.low.all);
         entry.severities.negligible.all = entry.severities.negligible.all.max(spec.severities.negligible.all);
         entry.severities.unknown.all = entry.severities.unknown.all.max(spec.severities.unknown.all);
+        entry.severities.critical.relevant = entry.severities.critical.relevant.max(spec.severities.critical.relevant);
+        entry.severities.high.relevant = entry.severities.high.relevant.max(spec.severities.high.relevant);
+        entry.severities.medium.relevant = entry.severities.medium.relevant.max(spec.severities.medium.relevant);
+        entry.severities.low.relevant = entry.severities.low.relevant.max(spec.severities.low.relevant);
+        entry.severities.negligible.relevant = entry.severities.negligible.relevant.max(spec.severities.negligible.relevant);
+        entry.severities.unknown.relevant = entry.severities.unknown.relevant.max(spec.severities.unknown.relevant);
         entry.workload_count += 1;
     }
 
@@ -293,16 +275,17 @@ pub async fn config_scan_detail(
 
 /// Get all controls across all workloads, grouped by control ID, for compliance view.
 pub async fn compliance_controls(client: &Client) -> Result<Vec<ComplianceControl>, AppError> {
-    // Fetch summaries (for pass/fail counts) and one full scan (for control names)
     let summary_api = Api::all_with(client.clone(), &resources::workload_configuration_scan_summary());
     let scan_api = Api::all_with(client.clone(), &resources::workload_configuration_scan());
 
+    // Fetch summaries (for pass/fail counts) and full scans (for control names).
+    // Each scan only covers ~1 control, so we need all scans to collect all 92+ names.
     let (summary_items, scan_items) = tokio::try_join!(
         list_full(&summary_api),
         list_full(&scan_api),
     )?;
 
-    // Build control ID → name lookup from full scan
+    // Build control ID → name lookup from full scans
     let mut name_lookup: BTreeMap<String, String> = BTreeMap::new();
     for obj in &scan_items {
         if let Some(spec) = parse_spec::<ConfigScanSummarySpec>(obj) {

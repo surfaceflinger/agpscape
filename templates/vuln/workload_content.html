@@ -18,6 +18,9 @@
     <span class="badge high">High: {{ workload.severities.high.all }}</span>
     <span class="badge medium">Medium: {{ workload.severities.medium.all }}</span>
     <span class="badge low">Low: {{ workload.severities.low.all }}</span>
+    {% if workload.severities.total_relevant() > 0 %}
+    <span class="muted"> | Relevant: {{ workload.severities.total_relevant() }}</span>
+    {% endif %}
 </div>
 
 <div class="filter-bar">

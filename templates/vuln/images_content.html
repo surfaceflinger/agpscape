@@ -18,6 +18,7 @@
             <th class="num" data-sort="num">Medium</th>
             <th class="num" data-sort="num">Low</th>
             <th class="num" data-sort="num">Total</th>
+            <th class="num" data-sort="num">Relevant</th>
         </tr>
     </thead>
     <tbody>
@@ -30,6 +31,7 @@
             <td class="num"><span class="badge medium">{{ img.severities.medium.all }}</span></td>
             <td class="num"><span class="badge low">{{ img.severities.low.all }}</span></td>
             <td class="num">{{ img.severities.total() }}</td>
+            <td class="num">{% if img.severities.total_relevant() > 0 %}{{ img.severities.total_relevant() }}{% else %}<span class="muted">—</span>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>

@@ -57,10 +57,35 @@ pub struct WorkloadIdentity {
 
 // ── Vulnerabilities ──
 
+/// Spec for per-workload VulnerabilityManifestSummary.
+/// `vulnerabilitiesRef` is an object: `{all: {name: ...}, relevant: {name: ...}}`
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(default)]
-pub struct VulnSummarySpec {
+pub struct VulnManifestSummarySpec {
     pub severities: SeverityCounts,
+    #[serde(rename = "vulnerabilitiesRef")]
+    pub vulnerabilities_ref: VulnerabilitiesRef,
+}
+
+/// Spec for cluster-scoped VulnerabilitySummary (one per namespace).
+/// `vulnerabilitiesRef` here is an array of workload refs — we don't need it for the namespace view.
+#[derive(Debug, Clone, Deserialize, Default)]
+#[serde(default)]
+pub struct VulnNamespaceSummarySpec {
+    pub severities: SeverityCounts,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+#[serde(default)]
+pub struct VulnerabilitiesRef {
+    pub all: ManifestRef,
+    pub relevant: ManifestRef,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+#[serde(default)]
+pub struct ManifestRef {
+    pub name: String,
 }
 
 #[derive(Debug, Clone)]
@@ -69,6 +94,8 @@ pub struct VulnWorkloadSummary {
     pub container_name: String,
     pub image_tag: String,
     pub severities: SeverityCounts,
+    /// Name of the image-scoped VulnerabilityManifest with all CVE matches.
+    pub manifest_name: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -80,6 +107,7 @@ pub struct ManifestSpec {
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(default)]
 pub struct GrypePayload {
+    #[serde(deserialize_with = "null_as_default")]
     pub matches: Vec<GrypeMatch>,
 }
 
@@ -88,7 +116,7 @@ pub struct GrypePayload {
 pub struct GrypeMatch {
     pub vulnerability: VulnInfo,
     pub artifact: ArtifactInfo,
-    #[serde(rename = "relatedVulnerabilities")]
+    #[serde(rename = "relatedVulnerabilities", deserialize_with = "null_as_default")]
     pub related_vulnerabilities: Vec<RelatedVuln>,
 }
 
@@ -122,6 +150,7 @@ pub struct CvssMetrics {
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(default)]
 pub struct FixInfo {
+    #[serde(deserialize_with = "null_as_default")]
     pub versions: Vec<String>,
     pub state: String,
 }
@@ -236,6 +265,8 @@ pub struct NetworkNeighborhoodSpec {
     pub containers: Vec<NetworkContainer>,
     #[serde(rename = "initContainers", deserialize_with = "null_as_default")]
     pub init_containers: Vec<NetworkContainer>,
+    #[serde(rename = "ephemeralContainers", deserialize_with = "null_as_default")]
+    pub ephemeral_containers: Vec<NetworkContainer>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -295,6 +326,8 @@ pub struct AppProfileSpec {
     pub containers: Vec<AppContainer>,
     #[serde(rename = "initContainers", deserialize_with = "null_as_default")]
     pub init_containers: Vec<AppContainer>,
+    #[serde(rename = "ephemeralContainers", deserialize_with = "null_as_default")]
+    pub ephemeral_containers: Vec<AppContainer>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -361,6 +394,9 @@ pub struct SyftArtifact {
     pub version: String,
     #[serde(rename = "type")]
     pub artifact_type: String,
+    pub language: String,
+    #[serde(rename = "foundBy")]
+    pub found_by: String,
     #[serde(deserialize_with = "null_as_default")]
     pub licenses: Vec<SyftLicense>,
     pub purl: String,
@@ -372,6 +408,8 @@ pub struct SyftLicense {
     pub value: String,
     #[serde(rename = "type")]
     pub license_type: String,
+    #[serde(rename = "spdxExpression")]
+    pub spdx_expression: String,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -401,6 +439,15 @@ impl SeverityCounts {
             + self.negligible.all
             + self.unknown.all
     }
+
+    pub fn total_relevant(&self) -> i64 {
+        self.critical.relevant
+            + self.high.relevant
+            + self.medium.relevant
+            + self.low.relevant
+            + self.negligible.relevant
+            + self.unknown.relevant
+    }
 }
 
 impl ConfigWorkloadSummary {
@@ -421,6 +468,23 @@ impl ConfigScanSummarySpec {
     }
     pub fn skipped_controls(&self) -> Vec<&ConfigControl> {
         self.controls.values().filter(|c| c.status.status == "skipped").collect()
+    }
+
+    /// Compute severity counts from controls (the API strips spec.severities on
+    /// plain GET, but controls are always present).
+    pub fn computed_severities(&self) -> SimpleSeverityCounts {
+        let mut s = SimpleSeverityCounts::default();
+        for c in self.controls.values() {
+            if c.status.status != "failed" { continue; }
+            match c.severity.severity.to_lowercase().as_str() {
+                "critical" => s.critical += 1,
+                "high" => s.high += 1,
+                "medium" => s.medium += 1,
+                "low" => s.low += 1,
+                _ => s.unknown += 1,
+            }
+        }
+        s
     }
 }
 

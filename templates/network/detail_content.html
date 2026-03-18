@@ -11,7 +11,7 @@
     <span><strong>Kind:</strong> {{ identity.kind }}</span>
 </div>
 
-{% for container in spec.containers.iter().chain(spec.init_containers.iter()) %}
+{% for container in spec.containers.iter().chain(spec.init_containers.iter()).chain(spec.ephemeral_containers.iter()) %}
 <h2>Container: {{ container.name }}</h2>
 
 {% if !container.ingress.is_empty() %}

@@ -17,6 +17,16 @@ pub fn vulnerability_manifest_summary() -> ApiResource {
     ar("VulnerabilityManifestSummary", "vulnerabilitymanifestsummaries")
 }
 
+pub fn vulnerability_summary() -> ApiResource {
+    ApiResource {
+        group: GROUP.into(),
+        version: VERSION.into(),
+        api_version: format!("{GROUP}/{VERSION}"),
+        kind: "VulnerabilitySummary".into(),
+        plural: "vulnerabilitysummaries".into(),
+    }
+}
+
 pub fn vulnerability_manifest() -> ApiResource {
     ar("VulnerabilityManifest", "vulnerabilitymanifests")
 }
